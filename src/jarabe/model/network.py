@@ -367,6 +367,27 @@ def is_sugar_adhoc_network(ssid):
     return ssid.startswith('Ad-hoc Network')
 
 
+class EapSecurity(object):
+
+    def __init__(self):
+        self.eap = None
+        self.identity = None
+        self.password = None
+        self.phase2_auth = None
+
+    def get_dict(self):
+        eap_security = {}
+        if self.eap is not None:
+            eap_security['eap'] = [self.eap]
+        if self.identity is not None:
+            eap_security['identity'] = self.identity
+        if self.password is not None:
+            eap_security['password'] = self.password
+        if self.phase2_auth is not None:
+            eap_security['phase2-auth'] = self.phase2_auth
+        return eap_security
+
+
 class WirelessSecurity(object):
     def __init__(self):
         self.key_mgmt = None
@@ -518,6 +539,7 @@ class Settings(object):
         self.connection = ConnectionSettings()
         self.ip4_config = None
         self.wireless_security = None
+        self.wpa_eap_setting = None
 
         if wireless_cfg is not None:
             self.wireless = wireless_cfg
@@ -533,6 +555,8 @@ class Settings(object):
                 self.wireless_security.get_dict()
         if self.ip4_config is not None:
             settings['ipv4'] = self.ip4_config.get_dict()
+        if self.wpa_eap_setting is not None:
+            settings['802-1x'] = self.wpa_eap_setting.get_dict()
         return settings
 
 
