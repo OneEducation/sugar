@@ -716,6 +716,7 @@ class HiddenNetworkManager(GObject.GObject):
 
     def store_empty_config(self):
         # DEPRECATED
+        from gi.repository import GConf
         client = GConf.Client.get_default()
         client.set_string(
             '/desktop/sugar/extensions/network/hidden_network_profile', '')
