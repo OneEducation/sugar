@@ -597,9 +597,16 @@ class SecretsResponse(object):
         self._error_cb(error)
 
 
-class HiddenNetworkManager():
+class HiddenNetworkManager(GObject.GObject):
+
+    __gsignals__ = {
+        'error': (GObject.SignalFlags.RUN_FIRST, None, ([str])),
+        'success': (GObject.SignalFlags.RUN_FIRST, None, ([str])),
+    }
 
     def __init__(self, conn_profiles={}):
+        GObject.GObject.__init__(self)
+
         # DEPRECATED
         from gi.repository import GConf
         client = GConf.Client.get_default()
@@ -650,6 +657,7 @@ class HiddenNetworkManager():
             self._check_device(dev_o)
 
     def __get_devices_error_cb(self, err):
+        self.emit('error', err)
         logging.error('Failed to get devices: %s', err)
 
     def _check_device(self, device_o):
@@ -661,15 +669,13 @@ class HiddenNetworkManager():
         if device_type == NM_DEVICE_TYPE_WIFI:
             self._active_device = device_o
 
-    def _get_device_path_error_cb(self, err):
-        logging.error('Failed to get device type: %s', err)
-
     def create_and_connect_by_ssid(self, ssid):
         logging.debug('create_and_connect_by_ssid ssid=%s', ssid)
 
         if self._active_device is None:
             logging.error('Error trying to connect to hidden ssid, '
                           'device not found')
+            self.emit('error', _('Device not found'))
             return
 
         self._store_connection_in_use('', ssid)
@@ -695,9 +701,16 @@ class HiddenNetworkManager():
                 error_handler=self._add_connection_error_cb)
         else:
             logging.debug('ActivateConnection')
-            self._netmgr.ActivateConnection(
-                connection.get_path(),
-                self._active_device, '/')
+            try:
+                self._netmgr.ActivateConnection(
+                    connection.get_path(),
+                    self._active_device, '/')
+            except dbus.exceptions.DBusException as e:
+                logging.error("Error doing ActivateConnection '%s'",
+                              e.message)
+                self.emit('error', e.message)
+            else:
+                self.emit('success', _('Connection activated'))
 
     def store_empty_config(self):
         # DEPRECATED
@@ -725,11 +738,13 @@ class HiddenNetworkManager():
         """
         if self.selected_profile is None:
             logging.error('No profile selected')
+            self.emit('error', _('No profile selected'))
             return
 
         if self._active_device is None:
-            logging.error('Error trying to connect to hidden ssid by     '
+            logging.error('Error trying to connect to hidden ssid by '
                           'profile, device not found')
+            self.emit('error', _('Device not found'))
             return
 
         self._store_connection_in_use(self.selected_profile['title'], '')
@@ -778,9 +793,16 @@ class HiddenNetworkManager():
                 reply_handler=self._add_connection_reply_cb,
                 error_handler=self._add_connection_error_cb)
         else:
-            self._netmgr.ActivateConnection(
-                connection.get_path(),
-                self._active_device, '/')
+            try:
+                self._netmgr.ActivateConnection(
+                    connection.get_path(),
+                    self._active_device, '/')
+            except dbus.exceptions.DBusException as e:
+                logging.error("Error doing ActivateConnection '%s'",
+                              e.message)
+                self.emit('error', e.message)
+            else:
+                self.emit('success', _('Connection activated'))
 
     def store_requested_parameters(self, requested_parameters):
         import json
@@ -819,9 +841,11 @@ class HiddenNetworkManager():
 
     def _add_connection_reply_cb(self, netmgr, connection):
         logging.debug('Added connection: %s', connection)
+        self.emit('success', _('Connection activated'))
 
     def _add_connection_error_cb(self, err):
         logging.error('Failed to add connection: %s', err)
+        self.emit('error', err)
 
 
 def set_connected():
