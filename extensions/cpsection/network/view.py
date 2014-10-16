@@ -602,7 +602,7 @@ class Network(SectionView):
                 return
             # get the values from all the entries
             current_box = self._hidden_network_params_box.get_children()[0]
-            requested_parameters = []
+            requested_parameters = {}
             for child in current_box.get_children():
                 # child is the SettingBox
                 entry = child.get_children()[1]
@@ -610,8 +610,7 @@ class Network(SectionView):
                 logging.error('property %s value %s', property_name,
                               entry.get_text())
                 profile[property_name] = entry.get_text()
-                # add in a list to save the requested parameters
-                requested_parameters.append(property_name)
+                requested_parameters[property_name] = entry.get_text()
 
             logging.error('profile %s',
                           self._hidden_conn_manager.selected_profile)
