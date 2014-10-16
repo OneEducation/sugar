@@ -119,7 +119,8 @@ def is_wireless(connection):
     wifi_settings = connection.get_settings(
         network.NM_CONNECTION_TYPE_802_11_WIRELESS)
     if wifi_settings:
-        return not (wifi_settings['mode'] == 'adhoc' and
+        return not ('mode' in wifi_settings and
+                    wifi_settings['mode'] == 'adhoc' and
                     connection.get_id() in wifi_whitelist)
 
     mesh_settings = connection.get_settings(
