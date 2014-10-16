@@ -826,8 +826,11 @@ class HiddenNetworkManager(GObject.GObject):
         json_path = os.path.join(env.get_profile_path(),
                                  ('%s.json' % profile_title))
         if os.path.exists(json_path):
-            with open(json_path, 'w') as json_file:
-                requested_parameters = json.load(json_file)
+            with open(json_path, 'r') as json_file:
+                try:
+                    requested_parameters = json.load(json_file)
+                except ValueError:
+                    logging.error('Failed to read %s.json', profile_title)
         return requested_parameters
 
     def _store_connection_in_use(self, profile, ssid):
@@ -844,8 +847,11 @@ class HiddenNetworkManager(GObject.GObject):
         json_path = os.path.join(env.get_profile_path(),
                                  'hidden_networks.json')
         if os.path.exists(json_path):
-            with open(json_path, 'w') as json_file:
-                data = json.load(json_file)
+            with open(json_path, 'r') as json_file:
+                try:
+                    data = json.load(json_file)
+                except ValueError:
+                    logging.error('Failed to read hidden_networks.json')
         return data
 
     def _add_connection_reply_cb(self, netmgr, connection):
